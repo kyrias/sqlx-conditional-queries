@@ -1,0 +1,19 @@
+[package]
+name = "sqlx-conditional-queries-macros"
+version = "0.1.0"
+edition = "2021"
+repository = "https://github.com/kyrias/sqlx-conditional-queries"
+license = "MIT OR Apache-2.0"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro-error = "1.0.4"
+proc-macro2 = "1.0.49"
+sqlx-conditional-queries-core = { path = "../core", version = "0.1.0" }
+
+[features]
+mysql = ["sqlx-conditional-queries-core/mysql"]
+postgres = ["sqlx-conditional-queries-core/postgres"]
+sqlite = ["sqlx-conditional-queries-core/sqlite"]

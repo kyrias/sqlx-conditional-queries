@@ -1,0 +1,26 @@
+[workspace]
+members = [
+    "core",
+    "macros",
+]
+
+[package]
+name = "sqlx-conditional-queries"
+version = "0.1.0"
+edition = "2021"
+repository = "https://github.com/kyrias/sqlx-conditional-queries"
+license = "MIT OR Apache-2.0"
+keywords = ["sqlx", "database"]
+categories = ["database"]
+
+[package.metadata.docs.rs]
+features = ["postgres"]
+
+[dependencies]
+futures-core = "0.3.25"
+sqlx-conditional-queries-macros = { path = "macros", version = "0.1.0" }
+
+[features]
+mysql = ["sqlx-conditional-queries-macros/mysql"]
+postgres = ["sqlx-conditional-queries-macros/postgres"]
+sqlite = ["sqlx-conditional-queries-macros/sqlite"]

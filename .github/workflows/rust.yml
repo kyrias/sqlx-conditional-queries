@@ -1,0 +1,43 @@
+name: Rust
+
+on:
+  push:
+    branches: ["main"]
+  pull_request: ~
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: baptiste0928/cargo-install@v1
+        with:
+          crate: cargo-sort
+
+      - name: cargo-fmt
+        run: cargo fmt --check
+
+      - name: clippy
+        run: cargo clippy --all-features
+
+      - name: cargo-sort
+        run: cargo sort --check --workspace
+
+  test:
+    strategy:
+      matrix:
+        database-type: ["postgres", "mysql", "sqlite"]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: cargo-check
+        run: cargo check --workspace --features ${{ matrix.database-type }}
+
+      - name: cargo-test
+        run: cargo test --workspace --features ${{ matrix.database-type }}
