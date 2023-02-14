@@ -15,26 +15,40 @@ pub enum AnalyzeError {
     },
 }
 
+/// This represents the finished second step in the processing pipeline.
+/// The compile time bindings have been further processed to a form that allows us to easily create
+/// the cartesian product and thereby all query variations in the next step.
 #[derive(Debug)]
 pub(crate) struct AnalyzedConditionalQueryAs {
     pub(crate) output_type: syn::Ident,
     pub(crate) query_string: syn::LitStr,
-    pub(crate) comp_time_bindings: Vec<CompileTimeBinding>,
+    pub(crate) compile_time_bindings: Vec<CompileTimeBinding>,
 }
 
+/// This represents a single combination of a single compiletime binding of a query.
 #[derive(Debug)]
 pub(crate) struct CompileTimeBinding {
+    /// The actual expression used in the match statement.
+    /// E.g. for `match something`, this would be `something`.
     pub(crate) expression: syn::Expr,
-    pub(crate) variants: Vec<(syn::Pat, Vec<(syn::Ident, syn::LitStr)>)>,
+    /// Each entry in this Vec represents a single expanded `match` and the
+    /// binding names with the binding values from that specific arm.
+    /// (`match arm pattern`, Vec(binding_name, binding_value)`
+    pub(crate) arms: Vec<(syn::Pat, Vec<(syn::Ident, syn::LitStr)>)>,
 }
 
+/// Further parse and analyze all compiletime binding statements.
+/// Each binding is split into individual entries of this form:
+/// (`match arm pattern`, Vec(binding_name, binding_value)`
 pub(crate) fn analyze(
     parsed: ParsedConditionalQueryAs,
 ) -> Result<AnalyzedConditionalQueryAs, AnalyzeError> {
-    let mut comp_time_bindings = Vec::new();
+    let mut compile_time_bindings = Vec::new();
 
-    for (names, match_expr) in parsed.comp_time_bindings {
+    for (names, match_expr) in parsed.compile_time_bindings {
         let binding_names_span = names.span();
+        // Convert the OneOrPunctuated enum in a list of `Ident`s.
+        // `One(T)` will be converted into a Vec with a single entry.
         let binding_names: Vec<_> = names.into_iter().collect();
 
         let mut bindings = Vec::new();
@@ -48,6 +62,7 @@ pub(crate) fn analyze(
                     ..
                 }) => vec![literal],
 
+                // If there's a tuple, treat each literal inside that tuple as a binding value.
                 syn::Expr::Tuple(tuple) => {
                     let mut values = Vec::new();
                     for elem in tuple.elems {
@@ -66,6 +81,8 @@ pub(crate) fn analyze(
                 body => return Err(AnalyzeError::ExpectedStringLiteral(body.span())),
             };
 
+            // There must always be a matching amount of binding values in each match arm.
+            // Error if there are more or fewer values than binding names.
             if binding_names.len() != binding_values.len() {
                 return Err(AnalyzeError::BindingNameValueLengthMismatch {
                     names: binding_names.len(),
@@ -85,16 +102,16 @@ pub(crate) fn analyze(
             ));
         }
 
-        comp_time_bindings.push(CompileTimeBinding {
+        compile_time_bindings.push(CompileTimeBinding {
             expression: *match_expr.expr,
-            variants: bindings,
+            arms: bindings,
         });
     }
 
     Ok(AnalyzedConditionalQueryAs {
         output_type: parsed.output_type,
         query_string: parsed.query_string,
-        comp_time_bindings,
+        compile_time_bindings,
     })
 }
 
@@ -124,22 +141,24 @@ mod tests {
         assert_eq!(parsed.output_type, analyzed.output_type);
         assert_eq!(parsed.query_string, analyzed.query_string);
 
-        assert_eq!(analyzed.comp_time_bindings.len(), 2);
+        assert_eq!(analyzed.compile_time_bindings.len(), 2);
 
         {
-            let comp_time_binding = dbg!(analyzed.comp_time_bindings.remove(0));
+            let compile_time_binding = dbg!(analyzed.compile_time_bindings.remove(0));
             assert_eq!(
-                comp_time_binding.expression.to_token_stream().to_string(),
+                compile_time_binding
+                    .expression
+                    .to_token_stream()
+                    .to_string(),
                 "foo",
             );
 
-            assert_eq!(comp_time_binding.variants.len(), 1);
+            assert_eq!(compile_time_binding.arms.len(), 1);
             {
-                let variant = &comp_time_binding.variants[0];
-                assert_eq!(variant.0.to_token_stream().to_string(), "bar");
+                let arm = &compile_time_binding.arms[0];
+                assert_eq!(arm.0.to_token_stream().to_string(), "bar");
                 assert_eq!(
-                    variant
-                        .1
+                    arm.1
                         .iter()
                         .map(|v| (
                             v.0.to_token_stream().to_string(),
@@ -152,28 +171,30 @@ mod tests {
         }
 
         {
-            let comp_time_binding = dbg!(analyzed.comp_time_bindings.remove(0));
+            let compile_time_binding = dbg!(analyzed.compile_time_bindings.remove(0));
             assert_eq!(
-                comp_time_binding.expression.to_token_stream().to_string(),
+                compile_time_binding
+                    .expression
+                    .to_token_stream()
+                    .to_string(),
                 "c",
             );
 
             assert_eq!(
-                comp_time_binding
-                    .variants
+                compile_time_binding
+                    .arms
                     .iter()
                     .map(|v| v.0.to_token_stream().to_string())
                     .collect::<Vec<_>>(),
                 &["d"],
             );
 
-            assert_eq!(comp_time_binding.variants.len(), 1);
+            assert_eq!(compile_time_binding.arms.len(), 1);
             {
-                let variant = &comp_time_binding.variants[0];
-                assert_eq!(variant.0.to_token_stream().to_string(), "d");
+                let arm = &compile_time_binding.arms[0];
+                assert_eq!(arm.0.to_token_stream().to_string(), "d");
                 assert_eq!(
-                    variant
-                        .1
+                    arm.1
                         .iter()
                         .map(|v| (
                             v.0.to_token_stream().to_string(),

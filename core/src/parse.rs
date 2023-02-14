@@ -2,14 +2,26 @@ use syn::{parenthesized, parse::Parse};
 
 #[derive(Clone, Debug)]
 pub(crate) struct ParsedConditionalQueryAs {
+    /// This is the equivalent of sqlx's output type in a `query_as!` macro.
     pub(crate) output_type: syn::Ident,
+    /// The actual string of the query.
     pub(crate) query_string: syn::LitStr,
-    pub(crate) comp_time_bindings: Vec<(
+    /// All compile time bindings, each with its variables and associated `match` statement.
+    pub(crate) compile_time_bindings: Vec<(
         OneOrPunctuated<syn::Ident, syn::token::Comma>,
         syn::ExprMatch,
     )>,
 }
 
+/// This enum represents the identifier (`#foo`, `#(foo, bar)`) of single binding expression
+/// inside a query.
+///
+/// Normal statements such as `#foo = match something {...}` are represented by the `One(T)`
+/// variant.
+///
+/// It's also possible to match tuples such as:
+/// `#(order_dir, order_dir_rev) = match order_dir {...}`
+/// These are represented by the `Punctuated(...)` variant.
 #[derive(Clone, Debug)]
 pub(crate) enum OneOrPunctuated<T, P> {
     One(T),
@@ -41,6 +53,8 @@ impl<T, P> IntoIterator for OneOrPunctuated<T, P> {
 }
 
 impl Parse for ParsedConditionalQueryAs {
+    /// Take a given raw token stream from a macro invocation and parse it into our own
+    /// representation for further processing.
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         // Parse the ident of the output type that we're going to pass to `query_as!`.
         let output_type = input.parse::<syn::Ident>()?;
@@ -51,7 +65,7 @@ impl Parse for ParsedConditionalQueryAs {
 
         // The rest of the input has to be an optional sequence of compile-time binding
         // expressions.
-        let mut comp_time_bindings = Vec::new();
+        let mut compile_time_bindings = Vec::new();
         while !input.is_empty() {
             // Every binding expression has to be preceeded by a comma, and we also allow the final
             // comma to be optional.
@@ -84,13 +98,13 @@ impl Parse for ParsedConditionalQueryAs {
             // And finally we parse a match expression.
             let match_expression = input.parse::<syn::ExprMatch>()?;
 
-            comp_time_bindings.push((binding_names, match_expression));
+            compile_time_bindings.push((binding_names, match_expression));
         }
 
         Ok(ParsedConditionalQueryAs {
             output_type,
             query_string,
-            comp_time_bindings,
+            compile_time_bindings,
         })
     }
 }
@@ -125,10 +139,10 @@ mod tests {
             syn::LitStr::new("some SQL query", proc_macro2::Span::call_site()),
         );
 
-        assert_eq!(parsed.comp_time_bindings.len(), 2);
+        assert_eq!(parsed.compile_time_bindings.len(), 2);
 
         {
-            let (names, _) = parsed.comp_time_bindings.remove(0);
+            let (names, _) = parsed.compile_time_bindings.remove(0);
 
             assert_eq!(
                 names.into_iter().collect::<Vec<_>>(),
@@ -137,7 +151,7 @@ mod tests {
         }
 
         {
-            let (names, _) = parsed.comp_time_bindings.remove(0);
+            let (names, _) = parsed.compile_time_bindings.remove(0);
 
             assert_eq!(
                 names.into_iter().collect::<Vec<_>>(),
