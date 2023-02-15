@@ -6,8 +6,9 @@ members = [
 
 [package]
 name = "sqlx-conditional-queries"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
+description = "Compile-time conditional queries for SQLx"
 repository = "https://github.com/kyrias/sqlx-conditional-queries"
 license = "MIT OR Apache-2.0"
 keywords = ["sqlx", "database"]

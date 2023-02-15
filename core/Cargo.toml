@@ -1,7 +1,8 @@
 [package]
 name = "sqlx-conditional-queries-core"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
+description = "Internal functions for sqlx-conditional-queries"
 repository = "https://github.com/kyrias/sqlx-conditional-queries"
 license = "MIT OR Apache-2.0"
 
