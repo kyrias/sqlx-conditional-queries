@@ -118,6 +118,12 @@ impl RunTimeBindings {
     }
 }
 
+/// This function takes the original query string that was supplied to the macro and adjusts it for
+/// each arm of the previously generated cartesian product of all bindings' match arms.
+///
+/// The `{#binding_name}` placeholder are then replaced with the string literals from match clauses
+/// and  all `{scope_variable} placeholder are replaced with the positional variables of the respective
+/// database engine whose feature is enabled. For more info take a look at [RunTimeBindings].
 pub(crate) fn expand(
     lowered: LoweredConditionalQueryAs,
 ) -> Result<ExpandedConditionalQueryAs, ExpandError> {
@@ -129,9 +135,10 @@ pub(crate) fn expand(
             .iter()
             .any(|fragment| fragment.value().contains("{#"))
         {
-            fragments = expand_compile_time_bindings(fragments, &arm.comp_time_bindings)?;
+            fragments = expand_compile_time_bindings(fragments, &arm.compile_time_bindings)?;
         }
 
+        // Substitute
         let mut run_time_bindings = RunTimeBindings::default();
         let expanded = expand_run_time_bindings(fragments, &mut run_time_bindings)?;
 
@@ -149,9 +156,16 @@ pub(crate) fn expand(
     })
 }
 
+/// This function takes the list of query fragments and substitutes all `{#binding_name}`
+/// occurrences with their literal strings from the respective match statements.
+///
+/// These literal strings however, can once again contain another `{#binding_name}`, which is why
+/// this function is called from a while loop.
+/// Since this function might get called multiple times, some fragments might already be expanded
+/// at this point, despite the variable name.
 fn expand_compile_time_bindings(
     unexpanded_fragments: Vec<syn::LitStr>,
-    comp_time_bindings: &HashMap<String, syn::LitStr>,
+    compile_time_bindings: &HashMap<String, syn::LitStr>,
 ) -> Result<Vec<syn::LitStr>, ExpandError> {
     let mut expanded_fragments = Vec::new();
 
@@ -192,7 +206,7 @@ fn expand_compile_time_bindings(
             if next_char == Some('#') {
                 // If the binding is a compile-time binding, expand it.
                 let binding_name = &fragment_str[2..end_of_binding];
-                if let Some(binding) = comp_time_bindings.get(binding_name) {
+                if let Some(binding) = compile_time_bindings.get(binding_name) {
                     expanded_fragments.push(binding.clone());
                 } else {
                     return Err(ExpandError::MissingCompileTimeBinding(
@@ -220,6 +234,9 @@ fn expand_compile_time_bindings(
     Ok(expanded_fragments)
 }
 
+/// Take all fragments and substitute any `{name}` occurrences with the respective database
+/// binding. Since the parameter syntax is different for various databases, [RunTimeBinding] is
+/// used in combination with feature flags to abstract this variance away.
 fn expand_run_time_bindings(
     unexpanded_fragments: Vec<syn::LitStr>,
     run_time_bindings: &mut RunTimeBindings,

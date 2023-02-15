@@ -2,6 +2,9 @@ use quote::{format_ident, quote};
 
 use crate::expand::ExpandedConditionalQueryAs;
 
+/// This is the final step of the macro generation pipeline.
+/// The match arms and the respective query fragments are now used to generate a giant match
+/// statement, which covers all variants of the bindings' match statements' cartesian products.
 pub(crate) fn codegen(expanded: ExpandedConditionalQueryAs) -> proc_macro2::TokenStream {
     let mut match_arms = Vec::new();
     for (idx, arm) in expanded.match_arms.iter().enumerate() {
