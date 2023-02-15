@@ -174,18 +174,6 @@ fn expand_compile_time_bindings(
         let mut fragment_str = fragment_string.as_str();
 
         while let Some(start_of_binding) = fragment_str.find('{') {
-            let next_char = fragment_str[start_of_binding..].chars().nth(1);
-            if next_char == Some('{') {
-                // If we find `{{` that means that we've hit an escaped brace which will be
-                // unescaped by the run-time binding pass.
-                expanded_fragments.push(syn::LitStr::new(
-                    &fragment_str[..start_of_binding + 2],
-                    fragment.span(),
-                ));
-                fragment_str = &fragment_str[start_of_binding + 2..];
-                continue;
-            }
-
             // Otherwise we've hit either a compile-time or a run-time binding, so first we
             // push any prefix before the binding.
             if !fragment_str[..start_of_binding].is_empty() {
@@ -203,7 +191,7 @@ fn expand_compile_time_bindings(
                 return Err(ExpandError::MissingBindingClosingBrace(fragment.span()));
             };
 
-            if next_char == Some('#') {
+            if fragment_str[start_of_binding..].chars().nth(1) == Some('#') {
                 // If the binding is a compile-time binding, expand it.
                 let binding_name = &fragment_str[2..end_of_binding];
                 if let Some(binding) = compile_time_bindings.get(binding_name) {
@@ -248,18 +236,6 @@ fn expand_run_time_bindings(
         let mut fragment_str = fragment_string.as_str();
 
         while let Some(start_of_binding) = fragment_str.find('{') {
-            let next_char = fragment_str[start_of_binding..].chars().nth(1);
-            if next_char == Some('{') {
-                // If we find `{{` that means that we've hit an escaped brace which we will
-                // unescape by skipping the second one.
-                expanded_query.push(syn::LitStr::new(
-                    &fragment_str[..start_of_binding + 1],
-                    fragment.span(),
-                ));
-                fragment_str = &fragment_str[start_of_binding + 2..];
-                continue;
-            }
-
             // Otherwise we've hit a run-time binding, so first we push any prefix before the
             // binding.
             expanded_query.push(syn::LitStr::new(
