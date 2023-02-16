@@ -19,7 +19,7 @@ features = ["postgres"]
 
 [dependencies]
 futures-core = "0.3.25"
-sqlx-conditional-queries-macros = { path = "macros", version = "0.1.2" }
+sqlx-conditional-queries-macros = { path = "macros", version = "0.1" }
 
 [features]
 mysql = ["sqlx-conditional-queries-macros/mysql"]
