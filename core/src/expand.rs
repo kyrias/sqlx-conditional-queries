@@ -174,8 +174,8 @@ fn expand_compile_time_bindings(
         let mut fragment_str = fragment_string.as_str();
 
         while let Some(start_of_binding) = fragment_str.find('{') {
-            // Otherwise we've hit either a compile-time or a run-time binding, so first we
-            // push any prefix before the binding.
+            // We've hit either a compile-time or a run-time binding, so first we push any prefix
+            // before the binding.
             if !fragment_str[..start_of_binding].is_empty() {
                 expanded_fragments.push(syn::LitStr::new(
                     &fragment_str[..start_of_binding],
@@ -191,7 +191,7 @@ fn expand_compile_time_bindings(
                 return Err(ExpandError::MissingBindingClosingBrace(fragment.span()));
             };
 
-            if fragment_str[start_of_binding..].chars().nth(1) == Some('#') {
+            if fragment_str.chars().nth(1) == Some('#') {
                 // If the binding is a compile-time binding, expand it.
                 let binding_name = &fragment_str[2..end_of_binding];
                 if let Some(binding) = compile_time_bindings.get(binding_name) {
