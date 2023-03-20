@@ -67,7 +67,7 @@ impl Parse for ParsedConditionalQueryAs {
         // expressions.
         let mut compile_time_bindings = Vec::new();
         while !input.is_empty() {
-            // Every binding expression has to be preceeded by a comma, and we also allow the final
+            // Every binding expression has to be preceded by a comma, and we also allow the final
             // comma to be optional.
             input.parse::<syn::token::Comma>()?;
             if input.is_empty() {
