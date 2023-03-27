@@ -1,5 +1,9 @@
 # Conditional compile-time verified queries with SQLx
 
+[<img alt="github" src="https://img.shields.io/badge/github-kyrias/sqlx--conditional--queries-8da0cb?style=for-the-badge&labelColor=555555&logo=github" height="20">](https://github.com/kyrias/sqlx-conditional-queries)
+[<img alt="crates.io" src="https://img.shields.io/crates/v/sqlx-conditional-queries.svg?style=for-the-badge&color=fc8d62&logo=rust" height="20">](https://crates.io/crates/sqlx-conditional-queries)
+[<img alt="docs.rs" src="https://img.shields.io/badge/docs.rs-sqlx--conditional--queries-66c2a5?style=for-the-badge&labelColor=555555&logo=docs.rs" height="20">](https://docs.rs/sqlx-conditional-queries)
+
 This crate provides a macro for generating conditional compile-time verified
 queries while using the SQLx `query_as!` macro.  This allows you to have parts
 of the query conditional in ways in which your chosen database doesn't allow by
