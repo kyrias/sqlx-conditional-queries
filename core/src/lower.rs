@@ -99,9 +99,9 @@ pub(crate) fn lower(analyzed: AnalyzedConditionalQueryAs) -> LoweredConditionalQ
     // TODO: Think about whether we just return earlier in the pipeline and just return the
     // original macro input as a `query_as!` macro.
     if match_expressions.is_empty() {
-        match_expressions.push(parse_quote!(true));
+        match_expressions.push(parse_quote!(()));
         match_arms.push(crate::lower::MatchArm {
-            patterns: vec![parse_quote!(true)],
+            patterns: vec![parse_quote!(())],
             compile_time_bindings: HashMap::new(),
         });
     }
