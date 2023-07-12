@@ -254,15 +254,11 @@ fn expand_run_time_bindings(
             let binding_name = &fragment_str[..end_of_binding];
             let (binding_name, type_override) = if let Some(offset) = binding_name.find(':') {
                 let (binding_name, type_override) = binding_name.split_at(offset);
-                let type_override =
-                    type_override
-                        .parse::<proc_macro2::TokenStream>()
-                        .map_err(|err| {
-                            ExpandError::BindingReferenceTypeOverrideParseError(
-                                err,
-                                fragment.span(),
-                            )
-                        })?;
+                let type_override = type_override[1..]
+                    .parse::<proc_macro2::TokenStream>()
+                    .map_err(|err| {
+                        ExpandError::BindingReferenceTypeOverrideParseError(err, fragment.span())
+                    })?;
                 (binding_name.trim(), Some(type_override))
             } else {
                 (binding_name, None)
@@ -337,7 +333,7 @@ mod tests {
         let parsed = syn::parse_str::<crate::parse::ParsedConditionalQueryAs>(
             r#"
                 SomeType,
-                "some {foo} {bar} {foo} query",
+                "some {foo:ty} {bar} {foo} query",
             "#,
         )
         .unwrap();
@@ -345,6 +341,7 @@ mod tests {
         let lowered = crate::lower::lower(analyzed);
         let expanded = expand(lowered).unwrap();
 
+        // Check that run-time binding references are generated properly.
         assert_eq!(
             expanded.match_arms[0]
                 .query_fragments
@@ -369,6 +366,27 @@ mod tests {
                     "\" \"",
                     "\"?\"",
                     "\" query\""
+                ],
+            }
+        );
+
+        // Check that type overrides are parsed properly.
+        let run_time_bindings: Vec<_> = expanded.match_arms[0]
+            .run_time_bindings
+            .iter()
+            .map(|(ident, ts)| (ident.to_string(), ts.as_ref().map(|ts| ts.to_string())))
+            .collect();
+        assert_eq!(
+            run_time_bindings,
+            match DATABASE_TYPE {
+                DatabaseType::PostgreSql => vec![
+                    ("foo".to_string(), Some("ty".to_string())),
+                    ("bar".to_string(), None),
+                ],
+                DatabaseType::MySql | DatabaseType::Sqlite => vec![
+                    ("foo".to_string(), Some("ty".to_string())),
+                    ("bar".to_string(), None),
+                    ("foo".to_string(), Some("ty".to_string())),
                 ],
             }
         );
