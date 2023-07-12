@@ -1,6 +1,6 @@
 [package]
 name = "sqlx-conditional-queries-macros"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2021"
 description = "Macro definition for sqlx-conditional-queries"
 repository = "https://github.com/kyrias/sqlx-conditional-queries"
