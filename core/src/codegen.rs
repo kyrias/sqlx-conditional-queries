@@ -12,10 +12,13 @@ pub(crate) fn codegen(expanded: ExpandedConditionalQueryAs) -> proc_macro2::Toke
         let variant = format_ident!("Variant{}", idx);
         let output_type = &expanded.output_type;
         let query_fragments = &arm.query_fragments;
-        let run_time_bindings = arm
-            .run_time_bindings
-            .iter()
-            .map(|(name, type_override)| quote!(#name #type_override));
+        let run_time_bindings =
+            arm.run_time_bindings
+                .iter()
+                .map(|(name, type_override)| match type_override {
+                    Some(ty) => quote!(#name as #ty),
+                    None => quote!(#name),
+                });
 
         match_arms.push(quote! {
             (#(#patterns,)*) => {
@@ -203,5 +206,26 @@ mod tests {
         let lowered = crate::lower::lower(analyzed);
         let expanded = crate::expand::expand(lowered).unwrap();
         let _codegened = codegen(expanded);
+    }
+
+    #[test]
+    fn type_override() {
+        let parsed = syn::parse_str::<crate::parse::ParsedConditionalQueryAs>(
+            r#"
+                SomeType,
+                "{some_binding:ty}",
+            "#,
+        )
+        .unwrap();
+        let analyzed = crate::analyze::analyze(parsed.clone()).unwrap();
+        let lowered = crate::lower::lower(analyzed);
+        let expanded = crate::expand::expand(lowered).unwrap();
+        let codegened = codegen(expanded);
+
+        let stringified = codegened.to_string();
+        assert!(
+            stringified.contains(" some_binding as ty"),
+            "binding type override was not correctly generated: {stringified}"
+        );
     }
 }
