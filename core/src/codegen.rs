@@ -95,6 +95,7 @@ fn build_conditional_map(variant_count: usize) -> proc_macro2::TokenStream {
             }
 
             /// See [`sqlx::query::Map::fetch_many`]
+            #[deprecated = "Only the SQLite driver supports multiple statements in one prepared statement and that behavior is deprecated. Use `sqlx::raw_sql()` instead. See https://github.com/launchbadge/sqlx/issues/3108 for discussion."]
             pub fn fetch_many<'e, 'c: 'e, E>(
                 mut self,
                 executor: E,
@@ -110,7 +111,10 @@ fn build_conditional_map(variant_count: usize) -> proc_macro2::TokenStream {
             {
                 match self {
                     #(
-                        Self::#variants(map) => map.fetch_many(executor),
+                        Self::#variants(map) => {
+                            #[allow(deprecated)]
+                            map.fetch_many(executor)
+                        }
                     )*
                 }
             }
