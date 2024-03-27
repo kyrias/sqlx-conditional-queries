@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.4] - 2024-03-27
+
 ### Deprecated
 
 - Deprecated `fetch_many` method since it was deprecated in `sqlx` 0.7.4. ([#17](https://github.com/kyrias/sqlx-conditional-queries/pull/17))
@@ -28,5 +30,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 [Unreleased]: https://github.com/kyrias/sqlx-conditional-queries/compare/0.1.2...main
+[0.1.3]: https://github.com/kyrias/sqlx-conditional-queries/compare/0.1.3...0.1.4
 [0.1.3]: https://github.com/kyrias/sqlx-conditional-queries/compare/0.1.2...0.1.3
 [0.1.2]: https://github.com/kyrias/sqlx-conditional-queries/compare/0.1.1...0.1.2
