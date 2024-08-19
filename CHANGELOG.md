@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Upgrade all dependencies. ([#19](https://github.com/kyrias/sqlx-conditional-queries/pull/19))
+
+
 ## [0.1.4] - 2024-03-27
 
 ### Deprecated

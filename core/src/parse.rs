@@ -83,8 +83,8 @@ impl Parse for ParsedConditionalQueryAs {
                 let content;
                 let paren_token = parenthesized!(content in input);
                 OneOrPunctuated::Punctuated(
-                    content.parse_terminated(syn::Ident::parse)?,
-                    paren_token.span,
+                    content.parse_terminated(syn::Ident::parse, syn::token::Comma)?,
+                    paren_token.span.join(),
                 )
             } else {
                 // Otherwise we only parse a single ident.
