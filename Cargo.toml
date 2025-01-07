@@ -1,8 +1,5 @@
 [workspace]
-members = [
-    "core",
-    "macros",
-]
+members = ["core", "macros"]
 
 [package]
 name = "sqlx-conditional-queries"

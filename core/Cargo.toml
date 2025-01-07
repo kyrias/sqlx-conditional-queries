@@ -6,6 +6,11 @@ description = "Internal functions for sqlx-conditional-queries"
 repository = "https://github.com/kyrias/sqlx-conditional-queries"
 license = "MIT OR Apache-2.0"
 
+[features]
+mysql = []
+postgres = []
+sqlite = []
+
 [dependencies]
 itertools = "0.13.0"
 proc-macro2 = "1.0.86"
@@ -13,7 +18,13 @@ quote = "1.0.36"
 syn = { version = "2.0.75", features = ["extra-traits", "full"] }
 thiserror = "1.0.63"
 
-[features]
-mysql = []
-postgres = []
-sqlite = []
+[dev-dependencies]
+insta = "1.42.0"
+prettyplease = "0.2.27"
+rstest = "0.24.0"
+
+[profile.dev.package.insta]
+opt-level = 3
+
+[profile.dev.package.similar]
+opt-level = 3

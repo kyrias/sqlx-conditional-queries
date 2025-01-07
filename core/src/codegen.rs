@@ -187,10 +187,15 @@ fn build_conditional_map(variant_count: usize) -> proc_macro2::TokenStream {
 
 #[cfg(test)]
 mod tests {
+    use crate::DatabaseType;
+
     use super::*;
 
-    #[test]
-    fn valid_syntax() {
+    #[rstest::rstest]
+    #[case(DatabaseType::PostgreSql)]
+    #[case(DatabaseType::MySql)]
+    #[case(DatabaseType::Sqlite)]
+    fn valid_syntax(#[case] database_type: DatabaseType) {
         let parsed = syn::parse_str::<crate::parse::ParsedConditionalQueryAs>(
             r#"
                 SomeType,
@@ -208,12 +213,15 @@ mod tests {
         .unwrap();
         let analyzed = crate::analyze::analyze(parsed.clone()).unwrap();
         let lowered = crate::lower::lower(analyzed);
-        let expanded = crate::expand::expand(lowered).unwrap();
+        let expanded = crate::expand::expand(database_type, lowered).unwrap();
         let _codegened = codegen(expanded);
     }
 
-    #[test]
-    fn type_override() {
+    #[rstest::rstest]
+    #[case(DatabaseType::PostgreSql)]
+    #[case(DatabaseType::MySql)]
+    #[case(DatabaseType::Sqlite)]
+    fn type_override(#[case] database_type: DatabaseType) {
         let parsed = syn::parse_str::<crate::parse::ParsedConditionalQueryAs>(
             r#"
                 SomeType,
@@ -223,7 +231,7 @@ mod tests {
         .unwrap();
         let analyzed = crate::analyze::analyze(parsed.clone()).unwrap();
         let lowered = crate::lower::lower(analyzed);
-        let expanded = crate::expand::expand(lowered).unwrap();
+        let expanded = crate::expand::expand(database_type, lowered).unwrap();
         let codegened = codegen(expanded);
 
         let stringified = codegened.to_string();
