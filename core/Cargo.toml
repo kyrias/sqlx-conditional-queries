@@ -1,15 +1,10 @@
 [package]
 name = "sqlx-conditional-queries-core"
-version = "0.2.1"
+version = "0.3.0"
 edition = "2021"
 description = "Internal functions for sqlx-conditional-queries"
 repository = "https://github.com/kyrias/sqlx-conditional-queries"
 license = "MIT OR Apache-2.0"
-
-[features]
-mysql = []
-postgres = []
-sqlite = []
 
 [dependencies]
 itertools = "0.14.0"

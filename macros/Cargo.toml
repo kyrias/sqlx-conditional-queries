@@ -1,6 +1,6 @@
 [package]
 name = "sqlx-conditional-queries-macros"
-version = "0.2.1"
+version = "0.3.0"
 edition = "2021"
 description = "Macro definition for sqlx-conditional-queries"
 repository = "https://github.com/kyrias/sqlx-conditional-queries"
@@ -12,7 +12,7 @@ proc-macro = true
 [dependencies]
 proc-macro-error = "1.0.4"
 proc-macro2 = "1.0.92"
-sqlx-conditional-queries-core = { path = "../core", version = "0.2" }
+sqlx-conditional-queries-core = { path = "../core", version = "0.3" }
 
 [features]
 mysql = []

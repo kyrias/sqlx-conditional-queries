@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 
+## [0.3.0] - 2025-01-07
+
+### Fixed
+- Fix queries only containing run-time bound parameters.
+  ([#20](https://github.com/kyrias/sqlx-conditional-queries/issues/20),
+  [#22](https://github.com/kyrias/sqlx-conditional-queries/pull/22))
+
+### Changed
+- Upgrade all dependencies.
+  ([#23](https://github.com/kyrias/sqlx-conditional-queries/pull/23))
+- Made `sqlx-conditional-queries-core` take database type at run-time.
+  ([#21](https://github.com/kyrias/sqlx-conditional-queries/pull/21))
+
+
 ## [0.2.1] - 2024-08-19
 
 ### Fixed
@@ -42,7 +56,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed bug introduced when removing brace escaping support that lead to out-of-bound panics when two bound parameter references were too far apart. ([#4](https://github.com/kyrias/sqlx-conditional-queries/issues/4))
 
 
-[Unreleased]: https://github.com/kyrias/sqlx-conditional-queries/compare/0.2.1...main
+[Unreleased]: https://github.com/kyrias/sqlx-conditional-queries/compare/0.3.0...main
+[0.3.0]: https://github.com/kyrias/sqlx-conditional-queries/compare/0.2.1...0.3.0
 [0.2.1]: https://github.com/kyrias/sqlx-conditional-queries/compare/0.2.0...0.2.1
 [0.2.0]: https://github.com/kyrias/sqlx-conditional-queries/compare/0.1.4...0.2.0
 [0.1.3]: https://github.com/kyrias/sqlx-conditional-queries/compare/0.1.3...0.1.4

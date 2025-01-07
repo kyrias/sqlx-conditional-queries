@@ -3,7 +3,7 @@ members = ["core", "macros"]
 
 [package]
 name = "sqlx-conditional-queries"
-version = "0.2.1"
+version = "0.3.0"
 edition = "2021"
 description = "Compile-time conditional queries for SQLx"
 repository = "https://github.com/kyrias/sqlx-conditional-queries"
@@ -16,7 +16,7 @@ features = ["postgres"]
 
 [dependencies]
 futures-core = "0.3.31"
-sqlx-conditional-queries-macros = { path = "macros", version = "0.2" }
+sqlx-conditional-queries-macros = { path = "macros", version = "0.3" }
 
 [features]
 mysql = ["sqlx-conditional-queries-macros/mysql"]
