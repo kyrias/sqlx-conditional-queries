@@ -9,6 +9,9 @@ mod expand;
 mod lower;
 mod parse;
 
+#[cfg(test)]
+mod snapshot_tests;
+
 #[derive(Clone, Copy, Debug)]
 pub enum DatabaseType {
     PostgreSql,
