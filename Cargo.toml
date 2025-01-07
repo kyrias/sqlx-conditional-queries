@@ -15,7 +15,7 @@ categories = ["database"]
 features = ["postgres"]
 
 [dependencies]
-futures-core = "0.3.30"
+futures-core = "0.3.31"
 sqlx-conditional-queries-macros = { path = "macros", version = "0.2" }
 
 [features]
