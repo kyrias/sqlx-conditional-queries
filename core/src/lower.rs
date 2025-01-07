@@ -83,6 +83,11 @@ pub(crate) fn lower(analyzed: AnalyzedConditionalQueryAs) -> LoweredConditionalQ
     // keep track of which match expressions belongs to which part of the match arm's expression.
     let mut match_arms = Vec::new();
     for binding in bindings.into_iter().multi_cartesian_product() {
+        // `multi_cartesian_product` returns one empty `Vec` if the iterator was empty.
+        if binding.is_empty() {
+            continue;
+        }
+
         let mut guards = Vec::new();
         let mut bindings = HashMap::new();
         binding.into_iter().for_each(|(g, b)| {
