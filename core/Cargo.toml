@@ -12,11 +12,11 @@ postgres = []
 sqlite = []
 
 [dependencies]
-itertools = "0.13.0"
-proc-macro2 = "1.0.86"
-quote = "1.0.36"
-syn = { version = "2.0.75", features = ["extra-traits", "full"] }
-thiserror = "1.0.63"
+itertools = "0.14.0"
+proc-macro2 = "1.0.92"
+quote = "1.0.38"
+syn = { version = "2.0.95", features = ["extra-traits", "full"] }
+thiserror = "2.0.9"
 
 [dev-dependencies]
 insta = "1.42.0"

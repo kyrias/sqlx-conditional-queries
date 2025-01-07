@@ -11,7 +11,7 @@ proc-macro = true
 
 [dependencies]
 proc-macro-error = "1.0.4"
-proc-macro2 = "1.0.86"
+proc-macro2 = "1.0.92"
 sqlx-conditional-queries-core = { path = "../core", version = "0.2" }
 
 [features]
