@@ -15,6 +15,6 @@ proc-macro2 = "1.0.86"
 sqlx-conditional-queries-core = { path = "../core", version = "0.2" }
 
 [features]
-mysql = ["sqlx-conditional-queries-core/mysql"]
-postgres = ["sqlx-conditional-queries-core/postgres"]
-sqlite = ["sqlx-conditional-queries-core/sqlite"]
+mysql = []
+postgres = []
+sqlite = []

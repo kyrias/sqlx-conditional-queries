@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{lower::LoweredConditionalQueryAs, DatabaseType, DATABASE_TYPE};
+use crate::{lower::LoweredConditionalQueryAs, DatabaseType};
 
 #[derive(Debug, thiserror::Error)]
 pub enum ExpandError {
@@ -39,12 +39,22 @@ struct RunTimeBinding {
     type_override: Option<proc_macro2::TokenStream>,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 struct RunTimeBindings {
+    database_type: DatabaseType,
     counter: usize,
     bindings: HashMap<syn::LitStr, RunTimeBinding>,
 }
+
 impl RunTimeBindings {
+    fn new(database_type: DatabaseType) -> Self {
+        Self {
+            database_type,
+            counter: 0,
+            bindings: Default::default(),
+        }
+    }
+
     /// Returns a database-appropriate run-time binding string for the given binding name.
     ///
     /// Database type selection is done based on the features this crate was built with.
@@ -58,7 +68,7 @@ impl RunTimeBindings {
         binding_name: syn::LitStr,
         type_override: Option<proc_macro2::TokenStream>,
     ) -> syn::LitStr {
-        match DATABASE_TYPE {
+        match self.database_type {
             DatabaseType::PostgreSql => {
                 let span = binding_name.span();
                 let binding = self.bindings.entry(binding_name).or_insert_with(|| {
@@ -125,6 +135,7 @@ impl RunTimeBindings {
 /// and  all `{scope_variable} placeholder are replaced with the positional variables of the respective
 /// database engine whose feature is enabled. For more info take a look at [RunTimeBindings].
 pub(crate) fn expand(
+    database_type: DatabaseType,
     lowered: LoweredConditionalQueryAs,
 ) -> Result<ExpandedConditionalQueryAs, ExpandError> {
     let mut match_arms = Vec::new();
@@ -139,7 +150,7 @@ pub(crate) fn expand(
         }
 
         // Substitute
-        let mut run_time_bindings = RunTimeBindings::default();
+        let mut run_time_bindings = RunTimeBindings::new(database_type);
         let expanded = expand_run_time_bindings(fragments, &mut run_time_bindings)?;
 
         match_arms.push(MatchArm {
@@ -289,8 +300,11 @@ mod tests {
 
     use super::*;
 
-    #[test]
-    fn expands_compile_time_bindings() {
+    #[rstest::rstest]
+    #[case(DatabaseType::PostgreSql)]
+    #[case(DatabaseType::MySql)]
+    #[case(DatabaseType::Sqlite)]
+    fn expands_compile_time_bindings(#[case] database_type: DatabaseType) {
         let parsed = syn::parse_str::<crate::parse::ParsedConditionalQueryAs>(
             r#"
                 SomeType,
@@ -308,7 +322,7 @@ mod tests {
         .unwrap();
         let analyzed = crate::analyze::analyze(parsed.clone()).unwrap();
         let lowered = crate::lower::lower(analyzed);
-        let expanded = expand(lowered).unwrap();
+        let expanded = expand(database_type, lowered).unwrap();
 
         assert_eq!(
             expanded.match_arms[0]
@@ -328,8 +342,11 @@ mod tests {
         );
     }
 
-    #[test]
-    fn expands_run_time_bindings() {
+    #[rstest::rstest]
+    #[case(DatabaseType::PostgreSql)]
+    #[case(DatabaseType::MySql)]
+    #[case(DatabaseType::Sqlite)]
+    fn expands_run_time_bindings(#[case] database_type: DatabaseType) {
         let parsed = syn::parse_str::<crate::parse::ParsedConditionalQueryAs>(
             r#"
                 SomeType,
@@ -339,7 +356,7 @@ mod tests {
         .unwrap();
         let analyzed = crate::analyze::analyze(parsed.clone()).unwrap();
         let lowered = crate::lower::lower(analyzed);
-        let expanded = expand(lowered).unwrap();
+        let expanded = expand(database_type, lowered).unwrap();
 
         // Check that run-time binding references are generated properly.
         assert_eq!(
@@ -348,7 +365,7 @@ mod tests {
                 .iter()
                 .map(|qs| qs.to_token_stream().to_string())
                 .collect::<Vec<_>>(),
-            match DATABASE_TYPE {
+            match database_type {
                 DatabaseType::PostgreSql => &[
                     "\"some \"",
                     "\"$1\"",
@@ -378,7 +395,7 @@ mod tests {
             .collect();
         assert_eq!(
             run_time_bindings,
-            match DATABASE_TYPE {
+            match database_type {
                 DatabaseType::PostgreSql => vec![
                     ("foo".to_string(), Some("ty".to_string())),
                     ("bar".to_string(), None),

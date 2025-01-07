@@ -9,17 +9,8 @@ mod expand;
 mod lower;
 mod parse;
 
-const DATABASE_TYPE: DatabaseType = if cfg!(feature = "postgres") {
-    DatabaseType::PostgreSql
-} else if cfg!(feature = "mysql") {
-    DatabaseType::MySql
-} else if cfg!(feature = "sqlite") {
-    DatabaseType::Sqlite
-} else {
-    panic!("No database feature was enabled")
-};
-
-enum DatabaseType {
+#[derive(Clone, Copy, Debug)]
+pub enum DatabaseType {
     PostgreSql,
     MySql,
     Sqlite,
@@ -36,12 +27,13 @@ pub enum Error {
 }
 
 pub fn conditional_query_as(
+    database_type: DatabaseType,
     input: proc_macro2::TokenStream,
 ) -> Result<proc_macro2::TokenStream, Error> {
     let parsed = syn::parse2::<parse::ParsedConditionalQueryAs>(input)?;
     let analyzed = analyze::analyze(parsed)?;
     let lowered = lower::lower(analyzed);
-    let expanded = expand::expand(lowered)?;
+    let expanded = expand::expand(database_type, lowered)?;
     let codegened = codegen::codegen(expanded);
 
     Ok(codegened)
