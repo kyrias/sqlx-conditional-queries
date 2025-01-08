@@ -1,6 +1,6 @@
 #![doc = include_str!("../README.md")]
 
-use proc_macro_error::abort;
+use proc_macro_error2::abort;
 use sqlx_conditional_queries_core::{AnalyzeError, DatabaseType, Error, ExpandError};
 
 const DATABASE_TYPE: DatabaseType = if cfg!(feature = "postgres") {
@@ -14,7 +14,7 @@ const DATABASE_TYPE: DatabaseType = if cfg!(feature = "postgres") {
 };
 
 // The public docs for this macro live in the sql-conditional-queries crate.
-#[proc_macro_error::proc_macro_error]
+#[proc_macro_error2::proc_macro_error]
 #[proc_macro]
 pub fn conditional_query_as(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input: proc_macro2::TokenStream = input.into();
