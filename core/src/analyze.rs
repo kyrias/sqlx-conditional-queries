@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use syn::spanned::Spanned;
 
 use crate::parse::ParsedConditionalQueryAs;
@@ -12,6 +14,11 @@ pub enum AnalyzeError {
         names_span: proc_macro2::Span,
         values: usize,
         values_span: proc_macro2::Span,
+    },
+    #[error("found two compile-time bindings with the same binding: {first}")]
+    DuplicatedCompileTimeBindingsFound {
+        first: proc_macro2::Ident,
+        second: proc_macro2::Ident,
     },
 }
 
@@ -45,11 +52,25 @@ pub(crate) fn analyze(
 ) -> Result<AnalyzedConditionalQueryAs, AnalyzeError> {
     let mut compile_time_bindings = Vec::new();
 
+    let mut known_binding_names = HashSet::new();
+
     for (names, match_expr) in parsed.compile_time_bindings {
         let binding_names_span = names.span();
         // Convert the OneOrPunctuated enum in a list of `Ident`s.
         // `One(T)` will be converted into a Vec with a single entry.
         let binding_names: Vec<_> = names.into_iter().collect();
+
+        // Find duplicate compile-time bindings.
+        for name in &binding_names {
+            let Some(first) = known_binding_names.get(name) else {
+                known_binding_names.insert(name.clone());
+                continue;
+            };
+            return Err(AnalyzeError::DuplicatedCompileTimeBindingsFound {
+                first: first.clone(),
+                second: name.clone(),
+            });
+        }
 
         let mut bindings = Vec::new();
         for arm in match_expr.arms {
@@ -208,5 +229,28 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn duplicate_compile_time_bindings() {
+        let parsed = syn::parse_str::<ParsedConditionalQueryAs>(
+            r##"
+                SomeType,
+                r#"{#a}"#,
+                #a = match _ {
+                    _ => "1",
+                },
+                #a = match _ {
+                    _ => "2",
+                },
+            "##,
+        )
+        .unwrap();
+        let analyzed = analyze(parsed.clone()).unwrap_err();
+
+        assert!(matches!(
+            analyzed,
+            AnalyzeError::DuplicatedCompileTimeBindingsFound { .. }
+        ));
     }
 }
