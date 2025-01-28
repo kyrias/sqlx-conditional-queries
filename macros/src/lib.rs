@@ -44,6 +44,11 @@ pub fn conditional_query_as(input: proc_macro::TokenStream) -> proc_macro::Token
             AnalyzeError::DuplicatedCompileTimeBindingsFound { first: _, second } => {
                 abort!(second.span(), "found duplicate compile-time binding")
             }
+            AnalyzeError::CompileTimeBindingCycleDetected { root_ident, path } => abort!(
+                root_ident.span(),
+                "detected compile-time binding cycle: {}",
+                path
+            ),
         },
         Err(Error::ExpandError(err)) => match err {
             // TODO: Make this span point at the binding reference.  Requires https://github.com/rust-lang/rust/issues/54725
