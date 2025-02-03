@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use syn::spanned::Spanned;
 
 use crate::parse::ParsedConditionalQueryAs;
@@ -12,6 +14,16 @@ pub enum AnalyzeError {
         names_span: proc_macro2::Span,
         values: usize,
         values_span: proc_macro2::Span,
+    },
+    #[error("found two compile-time bindings with the same binding: {first}")]
+    DuplicatedCompileTimeBindingsFound {
+        first: proc_macro2::Ident,
+        second: proc_macro2::Ident,
+    },
+    #[error("found cycle in compile-time bindings: {path}")]
+    CompileTimeBindingCycleDetected {
+        root_ident: proc_macro2::Ident,
+        path: String,
     },
 }
 
@@ -45,11 +57,25 @@ pub(crate) fn analyze(
 ) -> Result<AnalyzedConditionalQueryAs, AnalyzeError> {
     let mut compile_time_bindings = Vec::new();
 
+    let mut known_binding_names = HashSet::new();
+
     for (names, match_expr) in parsed.compile_time_bindings {
         let binding_names_span = names.span();
         // Convert the OneOrPunctuated enum in a list of `Ident`s.
         // `One(T)` will be converted into a Vec with a single entry.
         let binding_names: Vec<_> = names.into_iter().collect();
+
+        // Find duplicate compile-time bindings.
+        for name in &binding_names {
+            let Some(first) = known_binding_names.get(name) else {
+                known_binding_names.insert(name.clone());
+                continue;
+            };
+            return Err(AnalyzeError::DuplicatedCompileTimeBindingsFound {
+                first: first.clone(),
+                second: name.clone(),
+            });
+        }
 
         let mut bindings = Vec::new();
         for arm in match_expr.arms {
@@ -108,11 +134,85 @@ pub(crate) fn analyze(
         });
     }
 
+    compile_time_bindings::validate_compile_time_bindings(&compile_time_bindings)?;
+
     Ok(AnalyzedConditionalQueryAs {
         output_type: parsed.output_type,
         query_string: parsed.query_string,
         compile_time_bindings,
     })
+}
+
+mod compile_time_bindings {
+    use std::collections::{HashMap, HashSet};
+
+    use super::{AnalyzeError, CompileTimeBinding};
+
+    pub(super) fn validate_compile_time_bindings(
+        compile_time_bindings: &[CompileTimeBinding],
+    ) -> Result<(), AnalyzeError> {
+        let mut bindings = HashMap::new();
+
+        for (_, binding_values) in compile_time_bindings
+            .iter()
+            .flat_map(|bindings| &bindings.arms)
+        {
+            for (binding, value) in binding_values {
+                let name = binding.to_string();
+
+                let (_, references) = bindings
+                    .entry(name)
+                    .or_insert_with(|| (binding, HashSet::new()));
+                fill_references(references, &value.value());
+            }
+        }
+
+        for (name, (ident, _)) in &bindings {
+            validate_references(&bindings, ident, &[], name)?;
+        }
+
+        Ok(())
+    }
+
+    fn fill_references(references: &mut HashSet<String>, mut fragment: &str) {
+        while let Some(start_idx) = fragment.find("{#") {
+            fragment = &fragment[start_idx + 2..];
+            if let Some(end_idx) = fragment.find("}") {
+                references.insert(fragment[..end_idx].to_string());
+                fragment = &fragment[end_idx + 1..];
+            } else {
+                break;
+            }
+        }
+    }
+
+    fn validate_references(
+        bindings: &HashMap<String, (&syn::Ident, HashSet<String>)>,
+        root_ident: &syn::Ident,
+        path: &[&str],
+        name: &str,
+    ) -> Result<(), AnalyzeError> {
+        let mut path = path.to_vec();
+        path.push(name);
+
+        if path.iter().filter(|component| **component == name).count() > 1 {
+            return Err(AnalyzeError::CompileTimeBindingCycleDetected {
+                root_ident: root_ident.clone(),
+                path: path.join(" -> "),
+            });
+        }
+
+        let Some((_, references)) = bindings.get(name) else {
+            // This error is caught and handled in all contexts in the expand stage.
+            return Ok(());
+        };
+
+        for reference in references {
+            validate_references(bindings, root_ident, &path, reference)?;
+        }
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -208,5 +308,51 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn duplicate_compile_time_bindings() {
+        let parsed = syn::parse_str::<ParsedConditionalQueryAs>(
+            r##"
+                SomeType,
+                r#"{#a}"#,
+                #a = match _ {
+                    _ => "1",
+                },
+                #a = match _ {
+                    _ => "2",
+                },
+            "##,
+        )
+        .unwrap();
+        let analyzed = analyze(parsed.clone()).unwrap_err();
+
+        assert!(matches!(
+            analyzed,
+            AnalyzeError::DuplicatedCompileTimeBindingsFound { .. }
+        ));
+    }
+
+    #[test]
+    fn compile_time_binding_cycle_detected() {
+        let parsed = syn::parse_str::<ParsedConditionalQueryAs>(
+            r##"
+                SomeType,
+                r#"{#a}"#,
+                #a = match _ {
+                    _ => "{#b}",
+                },
+                #b = match _ {
+                    _ => "{#a}",
+                },
+            "##,
+        )
+        .unwrap();
+        let analyzed = analyze(parsed.clone()).unwrap_err();
+
+        assert!(matches!(
+            analyzed,
+            AnalyzeError::CompileTimeBindingCycleDetected { .. }
+        ));
     }
 }
