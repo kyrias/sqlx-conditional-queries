@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 
+## [0.3.2] - 2025-02-03
+
+### Fixed
+- Catch duplicate compile-time bindings and cyclical compile-time binding references.
+  ([#26](https://github.com/kyrias/sqlx-conditional-queries/pull/26))
+
+
 ## [0.3.1] - 2025-01-09
 
 ### Changed
@@ -63,7 +70,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed bug introduced when removing brace escaping support that lead to out-of-bound panics when two bound parameter references were too far apart. ([#4](https://github.com/kyrias/sqlx-conditional-queries/issues/4))
 
 
-[Unreleased]: https://github.com/kyrias/sqlx-conditional-queries/compare/0.3.1...main
+[Unreleased]: https://github.com/kyrias/sqlx-conditional-queries/compare/0.3.2...main
+[0.3.1]: https://github.com/kyrias/sqlx-conditional-queries/compare/0.3.1...0.3.2
 [0.3.1]: https://github.com/kyrias/sqlx-conditional-queries/compare/0.3.0...0.3.1
 [0.3.0]: https://github.com/kyrias/sqlx-conditional-queries/compare/0.2.1...0.3.0
 [0.2.1]: https://github.com/kyrias/sqlx-conditional-queries/compare/0.2.0...0.2.1
