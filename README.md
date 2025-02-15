@@ -31,6 +31,11 @@ in the list takes precedence.
 - `sqlite`
 
 
+## Examples
+
+See [examples](examples).
+
+
 #### License
 
 <sup>
