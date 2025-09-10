@@ -17,9 +17,27 @@ const DATABASE_TYPE: DatabaseType = if cfg!(feature = "postgres") {
 #[proc_macro_error2::proc_macro_error]
 #[proc_macro]
 pub fn conditional_query_as(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    conditional_query_as_inner(input, true)
+}
+
+// The public docs for this macro live in the sql-conditional-queries crate.
+#[proc_macro_error2::proc_macro_error]
+#[proc_macro]
+pub fn conditional_query_as_unchecked(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    conditional_query_as_inner(input, false)
+}
+
+fn conditional_query_as_inner(
+    input: proc_macro::TokenStream,
+    checked: bool,
+) -> proc_macro::TokenStream {
     let input: proc_macro2::TokenStream = input.into();
 
-    let ts = match sqlx_conditional_queries_core::conditional_query_as(DATABASE_TYPE, input) {
+    let ts = match sqlx_conditional_queries_core::conditional_query_as(
+        DATABASE_TYPE,
+        input,
+        checked,
+    ) {
         Ok(ts) => ts,
         Err(Error::SynError(err)) => {
             return err.to_compile_error().into();
