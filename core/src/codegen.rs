@@ -5,7 +5,10 @@ use crate::expand::ExpandedConditionalQueryAs;
 /// This is the final step of the macro generation pipeline.
 /// The match arms and the respective query fragments are now used to generate a giant match
 /// statement, which covers all variants of the bindings' match statements' cartesian products.
-pub(crate) fn codegen(expanded: ExpandedConditionalQueryAs) -> proc_macro2::TokenStream {
+pub(crate) fn codegen(
+    expanded: ExpandedConditionalQueryAs,
+    checked: bool,
+) -> proc_macro2::TokenStream {
     let mut match_arms = Vec::new();
     for (idx, arm) in expanded.match_arms.iter().enumerate() {
         let patterns = &arm.patterns;
@@ -20,10 +23,16 @@ pub(crate) fn codegen(expanded: ExpandedConditionalQueryAs) -> proc_macro2::Toke
                     None => quote!(#name),
                 });
 
+        let query = if checked {
+            format_ident!("query_as")
+        } else {
+            format_ident!("query_as_unchecked")
+        };
+
         match_arms.push(quote! {
             (#(#patterns,)*) => {
                 ConditionalMap::#variant(
-                    ::sqlx::query_as!(
+                    ::sqlx::#query!(
                         #output_type,
                         #(#query_fragments)+*,
                         #(#run_time_bindings),*
@@ -192,10 +201,13 @@ mod tests {
     use super::*;
 
     #[rstest::rstest]
-    #[case(DatabaseType::PostgreSql)]
-    #[case(DatabaseType::MySql)]
-    #[case(DatabaseType::Sqlite)]
-    fn valid_syntax(#[case] database_type: DatabaseType) {
+    #[case(DatabaseType::PostgreSql, true)]
+    #[case(DatabaseType::PostgreSql, false)]
+    #[case(DatabaseType::MySql, true)]
+    #[case(DatabaseType::MySql, false)]
+    #[case(DatabaseType::Sqlite, true)]
+    #[case(DatabaseType::Sqlite, false)]
+    fn valid_syntax(#[case] database_type: DatabaseType, #[case] checked: bool) {
         let parsed = syn::parse_str::<crate::parse::ParsedConditionalQueryAs>(
             r#"
                 SomeType,
@@ -214,14 +226,17 @@ mod tests {
         let analyzed = crate::analyze::analyze(parsed.clone()).unwrap();
         let lowered = crate::lower::lower(analyzed);
         let expanded = crate::expand::expand(database_type, lowered).unwrap();
-        let _codegened = codegen(expanded);
+        let _codegened = codegen(expanded, checked);
     }
 
     #[rstest::rstest]
-    #[case(DatabaseType::PostgreSql)]
-    #[case(DatabaseType::MySql)]
-    #[case(DatabaseType::Sqlite)]
-    fn type_override(#[case] database_type: DatabaseType) {
+    #[case(DatabaseType::PostgreSql, true)]
+    #[case(DatabaseType::PostgreSql, false)]
+    #[case(DatabaseType::MySql, true)]
+    #[case(DatabaseType::MySql, false)]
+    #[case(DatabaseType::Sqlite, true)]
+    #[case(DatabaseType::Sqlite, false)]
+    fn type_override(#[case] database_type: DatabaseType, #[case] checked: bool) {
         let parsed = syn::parse_str::<crate::parse::ParsedConditionalQueryAs>(
             r#"
                 SomeType,
@@ -232,7 +247,7 @@ mod tests {
         let analyzed = crate::analyze::analyze(parsed.clone()).unwrap();
         let lowered = crate::lower::lower(analyzed);
         let expanded = crate::expand::expand(database_type, lowered).unwrap();
-        let codegened = codegen(expanded);
+        let codegened = codegen(expanded, checked);
 
         let stringified = codegened.to_string();
         assert!(

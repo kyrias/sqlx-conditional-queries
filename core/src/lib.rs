@@ -32,12 +32,13 @@ pub enum Error {
 pub fn conditional_query_as(
     database_type: DatabaseType,
     input: proc_macro2::TokenStream,
+    checked: bool,
 ) -> Result<proc_macro2::TokenStream, Error> {
     let parsed = syn::parse2::<parse::ParsedConditionalQueryAs>(input)?;
     let analyzed = analyze::analyze(parsed)?;
     let lowered = lower::lower(analyzed);
     let expanded = expand::expand(database_type, lowered)?;
-    let codegened = codegen::codegen(expanded);
+    let codegened = codegen::codegen(expanded, checked);
 
     Ok(codegened)
 }

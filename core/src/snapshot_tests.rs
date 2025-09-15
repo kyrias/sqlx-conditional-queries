@@ -23,11 +23,18 @@ fn prettyprint(ts: TokenStream) -> String {
 }
 
 #[rstest::rstest]
-#[case::postgres(DatabaseType::PostgreSql)]
-#[case::mysql(DatabaseType::MySql)]
-#[case::sqlite(DatabaseType::Sqlite)]
-fn only_runtime_bound_parameters(#[case] database_type: DatabaseType) {
-    set_snapshot_suffix!("{:?}", database_type);
+#[case::postgres(DatabaseType::PostgreSql, true)]
+#[case::postgres_unchecked(DatabaseType::PostgreSql, false)]
+#[case::mysql(DatabaseType::MySql, true)]
+#[case::mysql_unchecked(DatabaseType::MySql, false)]
+#[case::sqlite(DatabaseType::Sqlite, true)]
+#[case::sqlite_unchecked(DatabaseType::Sqlite, false)]
+fn only_runtime_bound_parameters(#[case] database_type: DatabaseType, #[case] checked: bool) {
+    set_snapshot_suffix!(
+        "{:?}{}",
+        database_type,
+        if checked { "" } else { "_unchecked" }
+    );
     let input = quote::quote! {
         OutputType,
         r#"
@@ -36,16 +43,23 @@ fn only_runtime_bound_parameters(#[case] database_type: DatabaseType) {
             WHERE created_at > {created_at}
         "#,
     };
-    let output = crate::conditional_query_as(database_type, input).unwrap();
+    let output = crate::conditional_query_as(database_type, input, checked).unwrap();
     insta::assert_snapshot!(prettyprint(output));
 }
 
 #[rstest::rstest]
-#[case::postgres(DatabaseType::PostgreSql)]
-#[case::mysql(DatabaseType::MySql)]
-#[case::sqlite(DatabaseType::Sqlite)]
-fn only_compile_time_bound_parameters(#[case] database_type: DatabaseType) {
-    set_snapshot_suffix!("{:?}", database_type);
+#[case::postgres(DatabaseType::PostgreSql, true)]
+#[case::postgres_unchecked(DatabaseType::PostgreSql, false)]
+#[case::mysql(DatabaseType::MySql, true)]
+#[case::mysql_unchecked(DatabaseType::MySql, false)]
+#[case::sqlite(DatabaseType::Sqlite, true)]
+#[case::sqlite_unchecked(DatabaseType::Sqlite, false)]
+fn only_compile_time_bound_parameters(#[case] database_type: DatabaseType, #[case] checked: bool) {
+    set_snapshot_suffix!(
+        "{:?}{}",
+        database_type,
+        if checked { "" } else { "_unchecked" }
+    );
     let hash = proc_macro2::Punct::new('#', proc_macro2::Spacing::Alone);
     let input = quote::quote! {
         OutputType,
@@ -58,16 +72,23 @@ fn only_compile_time_bound_parameters(#[case] database_type: DatabaseType) {
             _ => "value",
         },
     };
-    let output = crate::conditional_query_as(database_type, input).unwrap();
+    let output = crate::conditional_query_as(database_type, input, checked).unwrap();
     insta::assert_snapshot!(prettyprint(output));
 }
 
 #[rstest::rstest]
-#[case::postgres(DatabaseType::PostgreSql)]
-#[case::mysql(DatabaseType::MySql)]
-#[case::sqlite(DatabaseType::Sqlite)]
-fn both_parameter_kinds(#[case] database_type: DatabaseType) {
-    set_snapshot_suffix!("{:?}", database_type);
+#[case::postgres(DatabaseType::PostgreSql, true)]
+#[case::postgres_unchecked(DatabaseType::PostgreSql, false)]
+#[case::mysql(DatabaseType::MySql, true)]
+#[case::mysql_unchecked(DatabaseType::MySql, false)]
+#[case::sqlite(DatabaseType::Sqlite, true)]
+#[case::sqlite_unchecked(DatabaseType::Sqlite, false)]
+fn both_parameter_kinds(#[case] database_type: DatabaseType, #[case] checked: bool) {
+    set_snapshot_suffix!(
+        "{:?}{}",
+        database_type,
+        if checked { "" } else { "_unchecked" }
+    );
     let hash = proc_macro2::Punct::new('#', proc_macro2::Spacing::Alone);
     let input = quote::quote! {
         OutputType,
@@ -82,6 +103,6 @@ fn both_parameter_kinds(#[case] database_type: DatabaseType) {
             _ => "value",
         },
     };
-    let output = crate::conditional_query_as(database_type, input).unwrap();
+    let output = crate::conditional_query_as(database_type, input, checked).unwrap();
     insta::assert_snapshot!(prettyprint(output));
 }
