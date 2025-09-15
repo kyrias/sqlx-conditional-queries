@@ -1,6 +1,3 @@
-[workspace]
-members = ["core", "macros"]
-
 [package]
 name = "sqlx-conditional-queries"
 version = "0.3.2"
@@ -14,11 +11,14 @@ categories = ["database"]
 [package.metadata.docs.rs]
 features = ["postgres"]
 
-[dependencies]
-futures-core = "0.3.31"
-sqlx-conditional-queries-macros = { path = "macros", version = "0.3" }
+[workspace]
+members = ["core", "macros"]
 
 [features]
 mysql = ["sqlx-conditional-queries-macros/mysql"]
 postgres = ["sqlx-conditional-queries-macros/postgres"]
 sqlite = ["sqlx-conditional-queries-macros/sqlite"]
+
+[dependencies]
+futures-core = "0.3.31"
+sqlx-conditional-queries-macros = { path = "macros", version = "0.3" }
