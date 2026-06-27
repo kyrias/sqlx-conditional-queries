@@ -10,7 +10,7 @@ fn dummy() {
         impl<'q, DB, A, O, F0> ConditionalMap<'q, DB, A, F0>
         where
             DB: ::sqlx::Database,
-            A: 'q + ::sqlx::IntoArguments<'q, DB> + ::std::marker::Send,
+            A: 'q + ::sqlx::IntoArguments<DB> + ::std::marker::Send,
             O: ::std::marker::Unpin + ::std::marker::Send,
             F0: ::std::ops::FnMut(DB::Row) -> ::sqlx::Result<O> + ::std::marker::Send,
         {

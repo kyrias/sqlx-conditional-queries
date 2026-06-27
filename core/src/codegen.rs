@@ -76,7 +76,7 @@ fn build_conditional_map(variant_count: usize) -> proc_macro2::TokenStream {
         impl<'q, DB, A, O, #(#function_params),*> ConditionalMap<'q, DB, A, #(#function_params),*>
         where
             DB: ::sqlx::Database,
-            A: 'q + ::sqlx::IntoArguments<'q, DB> + ::std::marker::Send,
+            A: 'q + ::sqlx::IntoArguments<DB> + ::std::marker::Send,
             O: ::std::marker::Unpin + ::std::marker::Send,
             #(
                 #function_params: ::std::ops::FnMut(DB::Row) -> ::sqlx::Result<O> + ::std::marker::Send,
