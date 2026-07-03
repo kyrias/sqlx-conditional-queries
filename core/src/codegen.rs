@@ -14,7 +14,11 @@ pub(crate) fn codegen(
         let patterns = &arm.patterns;
         let variant = format_ident!("Variant{}", idx);
         let output_type = &expanded.output_type;
-        let query_fragments = &arm.query_fragments;
+        let query_fragments = &arm
+            .query_fragments
+            .iter()
+            .map(|v| v.value())
+            .collect::<String>();
         let run_time_bindings =
             arm.run_time_bindings
                 .iter()
@@ -34,7 +38,7 @@ pub(crate) fn codegen(
                 ConditionalMap::#variant(
                     ::sqlx::#query!(
                         #output_type,
-                        #(#query_fragments)+*,
+                        #query_fragments,
                         #(#run_time_bindings),*
                     )
                 )
