@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 
+## [0.4.0] - 2026-07-03
+
+### Changed
+
+- BREAKING: Implemented support for SQLx 0.9.
+  ([#33](https://github.com/kyrias/sqlx-conditional-queries/pull/33))
+
+  This involves backwards-incompatible changes to the generated SQLx invocations as the signature of the `sqlx::IntoArguments` trait was changed to drop a lifetime reference.
+- Add `conditional_query_as_unchecked`.
+  ([#28](https://github.com/kyrias/sqlx-conditional-queries/pull/28))
+
 ## [0.3.2] - 2025-02-03
 
 ### Fixed
@@ -39,12 +50,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.2.1] - 2024-08-19
 
 ### Fixed
+
 - Internal dependency versions weren't updated in 0.2.0.
 
 
 ## [0.2.0] - 2024-08-19
 
 ### Changed
+
 - Upgrade all dependencies. ([#19](https://github.com/kyrias/sqlx-conditional-queries/pull/19))
 
 
@@ -70,7 +83,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed bug introduced when removing brace escaping support that lead to out-of-bound panics when two bound parameter references were too far apart. ([#4](https://github.com/kyrias/sqlx-conditional-queries/issues/4))
 
 
-[Unreleased]: https://github.com/kyrias/sqlx-conditional-queries/compare/0.3.2...main
+<<<<<<< HEAD
+[Unreleased]: https://github.com/kyrias/sqlx-conditional-queries/compare/0.4.0...main
+[0.4.0]: https://github.com/kyrias/sqlx-conditional-queries/compare/0.3.2...0.4.0
 [0.3.1]: https://github.com/kyrias/sqlx-conditional-queries/compare/0.3.1...0.3.2
 [0.3.1]: https://github.com/kyrias/sqlx-conditional-queries/compare/0.3.0...0.3.1
 [0.3.0]: https://github.com/kyrias/sqlx-conditional-queries/compare/0.2.1...0.3.0

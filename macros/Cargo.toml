@@ -1,6 +1,6 @@
 [package]
 name = "sqlx-conditional-queries-macros"
-version = "0.3.2"
+version = "0.4.0"
 edition = "2021"
 description = "Macro definition for sqlx-conditional-queries"
 repository = "https://github.com/kyrias/sqlx-conditional-queries"
@@ -17,4 +17,4 @@ sqlite = []
 [dependencies]
 proc-macro-error2 = "2.0.1"
 proc-macro2 = "1.0.92"
-sqlx-conditional-queries-core = { path = "../core", version = "0.3" }
+sqlx-conditional-queries-core = { path = "../core", version = "0.4" }
